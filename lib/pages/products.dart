@@ -7,10 +7,8 @@ class ProductsPage extends StatelessWidget {
 
   ProductsPage(this.products);
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      drawer: Drawer(
+  Widget _buildSideDrawer(BuildContext context) {
+    return Drawer(
         child: Column(
           children: <Widget>[
             AppBar(
@@ -20,11 +18,19 @@ class ProductsPage extends StatelessWidget {
             ListTile(
               leading: Icon(Icons.edit),
               title: Text('Manage Products'),
-              onTap: () => Navigator.pushReplacementNamed(context, '/admin')
-            ),
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/admin');
+            },
+          )
           ],
         ),
-      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      drawer: _buildSideDrawer(context),
       appBar: AppBar(
         title: Text('EasyList'),
         actions: <Widget>[

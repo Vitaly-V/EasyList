@@ -18,7 +18,7 @@ class ProductCard extends StatelessWidget {
     return Card(
       child: Column(
         children: <Widget>[
-          Image.asset(product.image),
+          Image.network(product.image),
           Container(
             margin: EdgeInsets.symmetric(vertical: 10.00),
             child: Row(

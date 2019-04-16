@@ -45,18 +45,18 @@ class ProductCard extends StatelessWidget {
             ),
             child: AddressTag('Union Square, San Francisco'),
           ),
-          ButtonBar(
-            alignment: MainAxisAlignment.center,
-            children: <Widget>[
-              IconButton(
-                icon: Icon(Icons.info),
-                color: Theme.of(context).accentColor,
-                onPressed: () => Navigator.pushNamed<bool>(
-                    context, '/product/' + productIndex.toString()),
-              ),
-              ScopedModelDescendant<MainModel>(
-                builder: (BuildContext context, Widget child, MainModel model) {
-                  return IconButton(
+          ScopedModelDescendant<MainModel>(
+            builder: (BuildContext context, Widget child, MainModel model) {
+              return ButtonBar(
+                alignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  IconButton(
+                    icon: Icon(Icons.info),
+                    color: Theme.of(context).accentColor,
+                    onPressed: () => Navigator.pushNamed<bool>(
+                        context, '/product/' + model.allProducts[productIndex].id),
+                  ),
+                  IconButton(
                     icon: Icon(
                       model.allProducts[productIndex].isFavorite
                           ? Icons.favorite
@@ -64,13 +64,13 @@ class ProductCard extends StatelessWidget {
                     ),
                     color: Colors.red,
                     onPressed: () {
-                      model.selectProduct(productIndex);
+                      model.selectProduct(model.allProducts[productIndex].id);
                       model.toggleProductFavoriteStatus();
                     },
-                  );
-                },
-              )
-            ],
+                  )
+                ],
+              );
+            },
           )
         ],
       ),

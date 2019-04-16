@@ -16,7 +16,8 @@ class _ProductEditPageState extends State<ProductEditPage> {
     'title': null,
     'description': null,
     'price': null,
-    'image': 'https://www.klondikebar.com/wp-content/uploads/sites/49/2015/09/double-chocolate-ice-cream-bar.png',
+    'image':
+        'https://www.klondikebar.com/wp-content/uploads/sites/49/2015/09/double-chocolate-ice-cream-bar.png',
   };
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
@@ -70,31 +71,29 @@ class _ProductEditPageState extends State<ProductEditPage> {
 
   Widget _buildSubmitButton() {
     return ScopedModelDescendant<MainModel>(
-      builder: (BuildContext context,
-          Widget child,
-          MainModel model,) {
+      builder: (
+        BuildContext context,
+        Widget child,
+        MainModel model,
+      ) {
         return model.isLoading
             ? Center(child: CircularProgressIndicator())
             : RaisedButton(
-          child: Text('Save'),
-          textColor: Colors.white,
-          onPressed: () =>
-              _submitForm(
-                model.addProduct,
-                model.updateProduct,
-                model.selectProduct,
-                model.selectedProductIndex,
-              ),
-        );
+                child: Text('Save'),
+                textColor: Colors.white,
+                onPressed: () => _submitForm(
+                      model.addProduct,
+                      model.updateProduct,
+                      model.selectProduct,
+                      model.selectedProductIndex,
+                    ),
+              );
       },
     );
   }
 
   Widget _buildPageContent(BuildContext context, Product product) {
-    final double deviceWidth = MediaQuery
-        .of(context)
-        .size
-        .width;
+    final double deviceWidth = MediaQuery.of(context).size.width;
     final double targetWidth = deviceWidth > 550.0 ? 500.0 : deviceWidth * 0.95;
     final double targetPadding = deviceWidth - targetWidth;
     return GestureDetector(
@@ -122,8 +121,8 @@ class _ProductEditPageState extends State<ProductEditPage> {
     );
   }
 
-  void _submitForm(Function addProduct, Function updateProduct,
-      Function setSelectedProduct,
+  void _submitForm(
+      Function addProduct, Function updateProduct, Function setSelectedProduct,
       [int selectedProductIndex]) {
     if (!_formKey.currentState.validate()) {
       return;
@@ -135,37 +134,54 @@ class _ProductEditPageState extends State<ProductEditPage> {
         _formData['description'],
         _formData['image'],
         _formData['price'],
-      ).then((_) =>
+      ).then((bool success) {
+        if (success) {
           Navigator.pushReplacementNamed(context, '/products')
-              .then((_) => setSelectedProduct(null)));
+              .then((_) => setSelectedProduct(null));
+        } else {
+          showDialog(context: context, builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Something went wrong'),
+              content: Text('Please try again'),
+              actions: <Widget>[
+                FlatButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('Okay'),
+                )
+              ],
+            );
+          });
+        }
+      });
     } else {
       updateProduct(
         _formData['title'],
         _formData['description'],
         _formData['image'],
         _formData['price'],
-      ).then((_) =>
-          Navigator.pushReplacementNamed(context, '/products')
-              .then((_) => setSelectedProduct(null)));
+      ).then((_) => Navigator.pushReplacementNamed(context, '/products')
+          .then((_) => setSelectedProduct(null)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return ScopedModelDescendant<MainModel>(
-      builder: (BuildContext context,
-          Widget child,
-          MainModel model,) {
+      builder: (
+        BuildContext context,
+        Widget child,
+        MainModel model,
+      ) {
         final Widget pageContent =
-        _buildPageContent(context, model.selectedProduct);
+            _buildPageContent(context, model.selectedProduct);
         return model.selectedProductIndex == -1
             ? pageContent
             : Scaffold(
-          appBar: AppBar(
-            title: Text('Edit Product'),
-          ),
-          body: pageContent,
-        );
+                appBar: AppBar(
+                  title: Text('Edit Product'),
+                ),
+                body: pageContent,
+              );
       },
     );
   }

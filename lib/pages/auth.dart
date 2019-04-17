@@ -99,13 +99,33 @@ class _AuthPageState extends State<AuthPage> {
       return;
     };
     _formKey.currentState.save();
-    if(_authMode == AuthMode.Login) {
-      login(_formData['email'], _formData['password']);
+    Map<String, dynamic> successInformation;
+    if (_authMode == AuthMode.Login) {
+      successInformation =
+          await login(_formData['email'], _formData['password']);
     } else {
-      final Map<String, dynamic> successInformation = await signup(_formData['email'], _formData['password']);
-      if (successInformation['success']) {
-        Navigator.pushReplacementNamed(context, '/products');
-      }
+      successInformation =
+          await signup(_formData['email'], _formData['password']);
+    }
+    if (successInformation['success']) {
+      Navigator.pushReplacementNamed(context, '/products');
+    } else {
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('An Error Occurred!'),
+              content: Text(successInformation['message']),
+              actions: <Widget>[
+                FlatButton(
+                  child: Text('Okay'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                )
+              ],
+            );
+          });
     }
   }
 
@@ -138,7 +158,9 @@ class _AuthPageState extends State<AuthPage> {
                     SizedBox(
                       height: 10.0,
                     ),
-                    _authMode == AuthMode.Signup ? _buildPasswordConfirmTextField() : Container(),
+                    _authMode == AuthMode.Signup
+                        ? _buildPasswordConfirmTextField()
+                        : Container(),
                     _buildAcceptSwitch(),
                     SizedBox(
                       height: 10.0,
@@ -163,11 +185,14 @@ class _AuthPageState extends State<AuthPage> {
                         Widget child,
                         MainModel model,
                       ) {
-                        return RaisedButton(
-                          textColor: Colors.white,
-                          child: Text('LOGIN'),
-                          onPressed: () => _submitForm(model.login, model.signup),
-                        );
+                        return model.isLoading
+                            ? Center(child: CircularProgressIndicator())
+                            : RaisedButton(
+                                textColor: Colors.white,
+                                child: Text('LOGIN'),
+                                onPressed: () =>
+                                    _submitForm(model.login, model.signup),
+                              );
                       },
                     )
                   ],

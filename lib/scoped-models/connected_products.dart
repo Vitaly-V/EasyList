@@ -58,7 +58,7 @@ mixin ProductsModel on ConnectedProductsModel {
       'title': title,
       'description': description,
       'image':
-      'https://upload.wikimedia.org/wikipedia/commons/6/68/Chocolatebrownie.JPG',
+          'https://upload.wikimedia.org/wikipedia/commons/6/68/Chocolatebrownie.JPG',
       'price': price,
       'userEmail': _authenticatedUser.email,
       'userId': _authenticatedUser.id
@@ -215,6 +215,22 @@ mixin ProductsModel on ConnectedProductsModel {
 mixin UserModel on ConnectedProductsModel {
   void login(String email, String password) {
     _authenticatedUser = User(id: '1', email: email, password: password);
+  }
+
+  Future<Map<String, dynamic>> signup(String email, String password) async {
+    print(email);
+    final Map<String, dynamic> authData = {
+      'email': email,
+      'password': password,
+      'returnSecureToken': true,
+    };
+    final http.Response response = await http.post(
+      'https://www.googleapis.com/identitytoolkit/v3/relyingparty/signupNewUser?key=AIzaSyDLgohMjtpOP0tBb7R8oZupVe1DhN6g6o0',
+      body: json.encode(authData),
+      headers: {'Content-Type': 'application/json'},
+    );
+    print(json.decode(response.body));
+    return {'success': true, 'message': 'Authentication succeeded!'};
   }
 }
 

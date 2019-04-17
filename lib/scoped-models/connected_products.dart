@@ -9,7 +9,7 @@ import '../models/product.dart';
 import '../models/user.dart';
 import '../models/auth.dart';
 
-final String apiKey = 'AIzaSyDLgohMjtpOP0tBb7R8oZupVe1DhN6g6o0';
+final String apiKey = 'AIzaSyDLgohMjtpOP0tBb7R8oZupVe1DhN6pg6o0';
 
 mixin ConnectedProductsModel on Model {
   List<Product> _products = [];

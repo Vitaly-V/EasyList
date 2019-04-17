@@ -3,6 +3,11 @@ import 'package:scoped_model/scoped_model.dart';
 
 import '../scoped-models/main.dart';
 
+enum AuthMode {
+  Signup,
+  Login,
+}
+
 class AuthPage extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
@@ -17,6 +22,8 @@ class _AuthPageState extends State<AuthPage> {
     'terms': false,
   };
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _passwordTextController = TextEditingController();
+  AuthMode _authMode = AuthMode.Login;
 
   DecorationImage _buildBackgroundImage() {
     return DecorationImage(
@@ -54,9 +61,26 @@ class _AuthPageState extends State<AuthPage> {
           return 'Password is required and should be 8+ characters long';
         }
       },
+      controller: _passwordTextController,
       obscureText: true,
       onSaved: (String value) {
         _formData['password'] = value;
+      },
+    );
+  }
+
+  Widget _buildPasswordConfirmTextField() {
+    return TextFormField(
+      decoration: InputDecoration(
+          labelText: 'Confirm passwoed', filled: true, fillColor: Colors.white),
+      validator: (String value) {
+        if (_passwordTextController.text != value) {
+          return 'Passwords do not match';
+        }
+      },
+      obscureText: true,
+      onSaved: (String value) {
+        _formData['email'] = value;
       },
     );
   }
@@ -108,7 +132,25 @@ class _AuthPageState extends State<AuthPage> {
                       height: 10.9,
                     ),
                     _buildPasswordTextField(),
+                    SizedBox(
+                      height: 10.0,
+                    ),
+                    _authMode == AuthMode.Signup ? _buildPasswordConfirmTextField() : Container(),
                     _buildAcceptSwitch(),
+                    SizedBox(
+                      height: 10.0,
+                    ),
+                    FlatButton(
+                      child: Text(
+                          'Switch to ${_authMode == AuthMode.Login ? 'Signup' : 'Login'}'),
+                      onPressed: () {
+                        setState(() {
+                          _authMode = _authMode == AuthMode.Login
+                              ? AuthMode.Signup
+                              : AuthMode.Login;
+                        });
+                      },
+                    ),
                     SizedBox(
                       height: 10.0,
                     ),
@@ -121,7 +163,7 @@ class _AuthPageState extends State<AuthPage> {
                         return RaisedButton(
                           textColor: Colors.white,
                           child: Text('LOGIN'),
-                          onPressed:() => _submitForm(model.login),
+                          onPressed: () => _submitForm(model.login),
                         );
                       },
                     )

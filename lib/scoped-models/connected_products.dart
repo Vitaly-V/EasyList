@@ -2,12 +2,14 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:rxdart/subjects.dart';
 
 import '../models/product.dart';
 import '../models/user.dart';
 import '../models/auth.dart';
 
-final String apiKey = 'AIzaSyDLgohMjtpOP0tBb7R8oZupVe1DhN6pg6o0';
+final String apiKey = 'AIzaSyDLgohMjtpOP0tBb7R8oZupVe1DhN6g6o0';
 
 mixin ConnectedProductsModel on Model {
   List<Product> _products = [];
@@ -137,10 +139,10 @@ mixin ProductsModel on ConnectedProductsModel {
     final deletedProductId = selectedProduct.id;
     _products.removeAt(selectedProductIndex);
     _selProductId = null;
-    // notifyListeners();
+    notifyListeners();
     return http
         .delete(
-            'https://flutter-products-454c0.firebaseio.com/products/$deletedProductId.json')
+            'https://flutter-products-454c0.firebaseio.com/products/$deletedProductId.json?auth=${_authenticatedUser.token}')
         .then((http.Response response) {
       _isLoading = false;
       notifyListeners();
@@ -155,9 +157,10 @@ mixin ProductsModel on ConnectedProductsModel {
   Future<Null> fetchProducts() {
     _isLoading = true;
     notifyListeners();
-    http
-        .get('https://flutter-products-454c0.firebaseio.com/products.json?auth=${_authenticatedUser.token}')
-        .then((http.Response response) {
+    return http
+        .get(
+            'https://flutter-products-454c0.firebaseio.com/products.json?auth=${_authenticatedUser.token}')
+        .then<Null>((http.Response response) {
       final List<Product> fetchedProductList = [];
       final Map<String, dynamic> productListData = json.decode(response.body);
       if (productListData == null) {
@@ -179,6 +182,7 @@ mixin ProductsModel on ConnectedProductsModel {
       _products = fetchedProductList;
       _isLoading = false;
       notifyListeners();
+      _selProductId = null;
     }).catchError((error) {
       _isLoading = false;
       notifyListeners();
@@ -204,10 +208,8 @@ mixin ProductsModel on ConnectedProductsModel {
 
   void selectProduct(String productId) {
     _selProductId = productId;
-    if (productId != null) {
       notifyListeners();
     }
-  }
 
   void toggleDisplayMode() {
     _showFavorites = !_showFavorites;
@@ -216,6 +218,17 @@ mixin ProductsModel on ConnectedProductsModel {
 }
 
 mixin UserModel on ConnectedProductsModel {
+  Timer _authTimer;
+  PublishSubject<bool> _userSubject = PublishSubject();
+
+  User get user {
+    return _authenticatedUser;
+  }
+
+  PublishSubject<bool> get userSubject {
+    return _userSubject;
+  }
+
   Future<Map<String, dynamic>> authenticate(String email, String password,
       [AuthMode mode = AuthMode.Login]) async {
     _isLoading = true;
@@ -241,7 +254,8 @@ mixin UserModel on ConnectedProductsModel {
     }
     final Map<String, dynamic> responseData = json.decode(response.body);
     bool hasError = true;
-    String message = 'Somthing went wrong!';
+    String message = 'Something went wrong.';
+    print(responseData);
     if (responseData.containsKey('idToken')) {
       hasError = false;
       message = 'Authentication succeeded!';
@@ -249,16 +263,61 @@ mixin UserModel on ConnectedProductsModel {
           id: responseData['localId'],
           email: email,
           token: responseData['idToken']);
-    } else if (responseData['error']['message'] == 'EMAIL_NOT_FOUND') {
-      message = 'This email was not found';
-    } else if (responseData['error']['message'] == 'INVALID_PASSWORD') {
-      message = 'The password is invalid';
+      setAuthTimeout(int.parse(responseData['expiresIn']));
+      _userSubject.add(true);
+      final DateTime now = DateTime.now();
+      final DateTime expiryTime = now.add(Duration(seconds: int.parse(responseData['expiresIn'])));
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setString('token', responseData['idToken']);
+      prefs.setString('userEmail', email);
+      prefs.setString('userId', responseData['localId']);
+      prefs.setString('expiryTime', expiryTime.toIso8601String());
     } else if (responseData['error']['message'] == 'EMAIL_EXISTS') {
-      message = 'This email already exists';
+      message = 'This email already exists.';
+    } else if (responseData['error']['message'] == 'EMAIL_NOT_FOUND') {
+      message = 'This email was not found.';
+    } else if (responseData['error']['message'] == 'INVALID_PASSWORD') {
+      message = 'The password is invalid.';
     }
     _isLoading = false;
     notifyListeners();
     return {'success': !hasError, 'message': message};
+  }
+
+  void autoAuthenticate() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String token = prefs.getString('token');
+    final String expiryTimeString = prefs.getString('expiryTime');
+    if (token != null) {
+      final DateTime now = DateTime.now();
+      final parsedExpiryTime = DateTime.parse(expiryTimeString);
+      if (parsedExpiryTime.isBefore(now)) {
+        _authenticatedUser = null;
+        notifyListeners();
+        return;
+      }
+      final String userEmail = prefs.getString('userEmail');
+      final String userId = prefs.getString('userId');
+      final int tokenLifespan = parsedExpiryTime.difference(now).inSeconds;
+      _authenticatedUser = User(id: userId, email: userEmail, token: token);
+      _userSubject.add(true);
+      setAuthTimeout(tokenLifespan);
+      notifyListeners();
+    }
+  }
+
+  void logout() async {
+    _authenticatedUser = null;
+    _authTimer.cancel();
+    _userSubject.add(false);
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.remove('token');
+    prefs.remove('userEmail');
+    prefs.remove('userId');
+  }
+
+  void setAuthTimeout(int time) {
+    _authTimer = Timer(Duration(seconds: time), logout);
   }
 }
 

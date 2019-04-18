@@ -154,7 +154,7 @@ mixin ProductsModel on ConnectedProductsModel {
     });
   }
 
-  Future<Null> fetchProducts() {
+  Future<Null> fetchProducts({onlyForUser = false}) {
     _isLoading = true;
     notifyListeners();
     return http
@@ -183,7 +183,9 @@ mixin ProductsModel on ConnectedProductsModel {
                     .containsKey(_authenticatedUser.id));
         fetchedProductList.add(product);
       });
-      _products = fetchedProductList;
+      _products = fetchedProductList.where((Product product) {
+        return product.userId == _authenticatedUser.id;
+      }).toList();
       _isLoading = false;
       notifyListeners();
       _selProductId = null;

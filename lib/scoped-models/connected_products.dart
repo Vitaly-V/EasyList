@@ -5,11 +5,11 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rxdart/subjects.dart';
 
+import '../consts.dart';
+
 import '../models/product.dart';
 import '../models/user.dart';
 import '../models/auth.dart';
-
-final String apiKey = 'AIzaSyDLgohMjtpOP0tBb7R8oZupVe1DhN6pg6o0';
 
 mixin ConnectedProductsModel on Model {
   List<Product> _products = [];
@@ -183,9 +183,9 @@ mixin ProductsModel on ConnectedProductsModel {
                     .containsKey(_authenticatedUser.id));
         fetchedProductList.add(product);
       });
-      _products = fetchedProductList.where((Product product) {
+      _products = onlyForUser ? fetchedProductList.where((Product product) {
         return product.userId == _authenticatedUser.id;
-      }).toList();
+      }).toList() : fetchedProductList;
       _isLoading = false;
       notifyListeners();
       _selProductId = null;

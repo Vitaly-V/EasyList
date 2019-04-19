@@ -43,9 +43,13 @@ android {
 
     buildTypes {
         release {
+            resValue 'string', "api_key", FlutterCourseMapsKey
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig signingConfigs.debug
+        }
+        debug {
+            resValue 'string', "api_key", FlutterCourseMapsKey
         }
     }
 }
@@ -55,6 +59,7 @@ flutter {
 }
 
 dependencies {
+    implementation 'com.google.android.gms:play-services-maps:16.0.0'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'

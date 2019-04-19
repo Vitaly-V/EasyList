@@ -10,6 +10,7 @@
         android:name="io.flutter.app.FlutterApplication"
         android:label="flutter_course"
         android:icon="@mipmap/ic_launcher">
+        <uses-library android:name="org.apache.http.legacy" android:required="false"/>
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
@@ -29,5 +30,7 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!--Test API KEY-->
+        <meta-data android:name="com.google.android.geo.API_KEY" android:value="@string/api_key"/>
     </application>
 </manifest>
